@@ -87,8 +87,8 @@ public class LocationService extends Service {
                             Intent intent = new Intent("cn.com.forthedream.locationreceiver");
                             intent.putExtra("time",d);
                             intent.putExtra("MAC",ibeacon.bluetoothAddress);
-                            intent.putExtra("id",ibeacon.proximityUuid);
-                            intent.putExtra("power",ibeacon.txPower);
+                            intent.putExtra("uuid",ibeacon.proximityUuid);
+                            intent.putExtra("power",ibeacon.rssi);
                             sendBroadcast(intent);
                         }
                     }

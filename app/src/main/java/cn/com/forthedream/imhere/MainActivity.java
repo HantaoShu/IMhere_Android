@@ -43,6 +43,13 @@ import com.oguzdev.circularfloatingactionmenu.library.FloatingActionMenu;
 import com.oguzdev.circularfloatingactionmenu.library.SubActionButton;
 
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.crypto.Mac;
+
+import static java.lang.Math.abs;
+import static java.lang.Math.pow;
 
 
 @SuppressWarnings("deprecation")
@@ -51,18 +58,21 @@ public class MainActivity extends AppCompatActivity {
     private View main;
 
     private ListView listView;
-    private static TextView locationTextView;
     private TextView username;
     private IntentFilter locationIntentFilter;
     private LocationReceiver locationReceiver;
     NavigationView navigationView;
     private final static String usernameString="用户名:";
-    private final static String locationString="MAC:";
     private static long beforetime=0;
     private final static int UPDATE_LOCATION = 1;
     private final static int NOTIFACTION = 2;
+    private final static int CHANGE = 3;
     WebView webView;
     private static String nowMac;
+    private static String uuid="-";
+    private static int txpower;
+    private static double distence;
+    private static String name;
     private static Handler hander;
     private boolean hadNotification = false;
     NotificationManager manger;
@@ -75,11 +85,9 @@ public class MainActivity extends AppCompatActivity {
         assert navigationView != null;
         View header = navigationView.getHeaderView(0);
         username = (TextView) header.findViewById(R.id.left_bar_username);
-        username.setText(usernameString+"tmp");
-        locationTextView = (TextView) header.findViewById(R.id.left_bar_location);
+        username.setText(usernameString+"sht");
         Intent FromLoginintent = getIntent();
-        username.setText(FromLoginintent.getStringExtra("username"));
-        locationTextView.setText(locationString+"none");
+        //username.setText(FromLoginintent.getStringExtra("username"));
         locationIntentFilter = new IntentFilter();
         locationIntentFilter.addAction("cn.com.forthedream.locationreceiver");
         locationReceiver = new LocationReceiver();
@@ -96,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
 
         init();
         final ImageView fabIconNew = new ImageView(this);
-        fabIconNew.setImageDrawable(getResources().getDrawable(R.drawable.ic_menu_camera));
+        fabIconNew.setImageDrawable(getResources().getDrawable(R.drawable.ic_action_new_light));
         final com.oguzdev.circularfloatingactionmenu.library.FloatingActionButton rightLowerButton = new com.oguzdev.circularfloatingactionmenu.library.FloatingActionButton.Builder(this)
                 .setContentView(fabIconNew)
                 .build();
@@ -105,12 +113,12 @@ public class MainActivity extends AppCompatActivity {
         ImageView rlIcon1 = new ImageView(this);
         ImageView rlIcon2 = new ImageView(this);
         ImageView rlIcon3 = new ImageView(this);
-        ImageView rlIcon4 = new ImageView(this);
 
-        rlIcon1.setImageDrawable(getResources().getDrawable(R.drawable.ic_action_place_light));
-        rlIcon2.setImageDrawable(getResources().getDrawable(R.drawable.ic_menu_gallery));
-        rlIcon3.setImageDrawable(getResources().getDrawable(R.drawable.ic_menu_gallery));
-        rlIcon4.setImageDrawable(getResources().getDrawable(R.drawable.ic_menu_gallery));
+
+        rlIcon1.setImageDrawable(getResources().getDrawable(R.drawable.addyemian));
+        rlIcon2.setImageDrawable(getResources().getDrawable(R.drawable.addzhaopian));
+        rlIcon3.setImageDrawable(getResources().getDrawable(R.drawable.addricheng));
+
 
         // Build the menu with default options: light theme, 90 degrees, 72dp radius.
         // Set 4 default SubActionButtons
@@ -118,17 +126,16 @@ public class MainActivity extends AppCompatActivity {
                 .addSubActionView(rLSubBuilder.setContentView(rlIcon1).build())
                 .addSubActionView(rLSubBuilder.setContentView(rlIcon2).build())
                 .addSubActionView(rLSubBuilder.setContentView(rlIcon3).build())
-                .addSubActionView(rLSubBuilder.setContentView(rlIcon4).build())
                 .attachTo(rightLowerButton)
                 .build();
         Log.d("aaa",""+rightLowerMenu.getSubActionItems().size());
 
         ArrayList<FloatingActionMenu.Item> items=rightLowerMenu.getSubActionItems();
-        items.get(1).view.setOnClickListener(new View.OnClickListener() {
+        items.get(2).view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(MainActivity.this,"caonima",Toast.LENGTH_SHORT).show();
-
+                //Toast.makeText(MainActivity.this,"caonima",Toast.LENGTH_SHORT).show();
+                    webView.loadUrl("http://imhere.zhranklin.com/new_richeng");
             }
         });
         // Listen menu open and close events to animate the button content view
@@ -144,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onMenuClosed(FloatingActionMenu menu) {
-                // Rotate the icon of rightLowerButton 45 degrees counter-clockwise
+                // Rotate the icon of rightLowerBut ton 45 degrees counter-clockwise
                 fabIconNew.setRotation(45);
                 PropertyValuesHolder pvhR = PropertyValuesHolder.ofFloat(View.ROTATION, 0);
                 ObjectAnimator animation = ObjectAnimator.ofPropertyValuesHolder(fabIconNew, pvhR);
@@ -170,19 +177,20 @@ public class MainActivity extends AppCompatActivity {
                 if (id == R.id.bt_homepage) {
                     Log.d("weizhi","home");
                     // Handle the camera action
-                    webView = (WebView) findViewById(R.id.webview);
-
-                    webView.loadUrl("http://imhere.zhranklin.com/items/a/a");
-
-                    main.setVisibility(View.VISIBLE);
+                    webView.loadUrl("http://imhere.zhranklin.com/items/"+uuid+"/a");
                 }
-                else if (id == R.id.bt_perference){
-
+                else if (id == R.id.bt_richeng) {
+                    webView.loadUrl("http://imhere.zhranklin.com/richeng");
                 }
-                else if (id == R.id.bt_weizhi){
-                    Log.d("weizhi","weizhi");
-
-
+                else if (id == R.id.bt_config){
+                    webView.loadUrl("http://imhere.zhranklin.com/pref/a");
+                }
+                else if (id== R.id.bt_perference) {
+                    webView.loadUrl("http://imhere.zhranklin.com/profile/sht");
+                }
+                else if (id== R.id.bt_weizhi){
+                    String url = "http://imhere.zhranklin.com/place_detail/-"+"/-"+"/-"+"/-"+"/-";
+                    webView.loadUrl(url);
                 }
 
                 DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -193,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         webView = (WebView) findViewById(R.id.webview);
-        webView.loadUrl("http://imhere.zhranklin.com/items/a/a");
+        webView.loadUrl("http://imhere.zhranklin.com/items/a/b");
         webView.getSettings().setJavaScriptEnabled(true);
         webView.setWebViewClient(new WebViewClient() {
             public boolean shouldOverrideUrlLoading(WebView view, String url)
@@ -207,15 +215,32 @@ public class MainActivity extends AppCompatActivity {
                 switch (msg.what){
                     case UPDATE_LOCATION:
                         Log.d("main","1:"+System.currentTimeMillis());
-                        locationTextView.setText(locationString+"none");
                         break;
                     case NOTIFACTION:
+                        Log.d("main",webView.getUrl());
+                        Pattern r = Pattern.compile(".*?place_detail");
+                        Matcher m = r.matcher(webView.getUrl());
+                        if(m.find()){
+                            Log.d("main","caonimacaonima");
+                            String url = "http://imhere.zhranklin.com/place_detail/"+uuid+"/"+name+"/"+ nowMac+"/"+txpower+"/"+String.format("%.2f",distence);
+                            webView.loadUrl(url);
+                        }
+                        r = Pattern.compile(".*?items.*");
+                        m = r.matcher(webView.getUrl());
+                        if(m.find()){
+                            String url = "http://imhere.zhranklin.com/items/"+uuid+"/a";
+                            webView.loadUrl(url);
+                        }
                         if(!hadNotification) {
+
                             Log.d("main","no"+hadNotification);
                             hadNotification = true;
+                            String tmp [] = {"","二基楼","教学楼","校车站","宿舍","江安花园站","红旗超市"};
+                            int now = uuid.charAt(uuid.length()-1)-'0';
+
                             NotificationCompat.Builder builder = (NotificationCompat.Builder) new NotificationCompat.Builder(MainActivity.this)
                                     .setContentTitle("有一个新的通知")
-                                    .setContentText("通知发生，具体请到app中查看")
+                                    .setContentText("您已到达"+tmp[now]+"，点击此处查看")
                                     .setAutoCancel(true)
                                     .setSmallIcon(R.drawable.ic_menu_manage)
                                     .setDefaults(Notification.DEFAULT_ALL)
@@ -228,6 +253,21 @@ public class MainActivity extends AppCompatActivity {
                             manger.notify(99,notification);
                         }
                         break;
+                    case CHANGE:
+                        r = Pattern.compile(".*?place_detail");
+                        m = r.matcher(webView.getUrl() + "a");
+                        if (m.find()) {
+                            String url = "http://imhere.zhranklin.com/place_detail/" + "-" + "/" + "-" + "/" + "-" + "/" + "-" + "/" + "-";
+                            webView.loadUrl(url);
+                        }
+                        r = Pattern.compile(".*?items.*");
+                        m = r.matcher(webView.getUrl());
+                        if(m.find()){
+                            String url = "http://imhere.zhranklin.com/items/-"+"/a";
+                            webView.loadUrl(url);
+                        }
+
+
                 }
 
             }
@@ -237,7 +277,13 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 while (true){
                     Log.d("main", "2:" + System.currentTimeMillis()+"\n is:"+beforetime+"\n less:"+(System.currentTimeMillis()-beforetime));
-                    if (System.currentTimeMillis() - beforetime > 1000*10) {
+                    if (System.currentTimeMillis() - beforetime > 1000*5 || distence>18) {
+                        if(webView!=null) {
+                                Message message = new Message();
+                                message.what = CHANGE;
+                                hander.sendMessage(message);
+
+                        }
                         Log.d("main","in");
                         Message message = new Message();
                         message.what = UPDATE_LOCATION;
@@ -309,12 +355,20 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             nowMac = intent.getStringExtra("MAC");
             beforetime = intent.getLongExtra("time",0);
+            txpower = intent.getIntExtra("power",0);
+            uuid = intent.getStringExtra("uuid");
+            distence=(abs(txpower)-59)/20.0;
+            distence = pow(10,distence)*5;
+            Log.d("main","dis:"+distence);
             Log.d("main","is"+beforetime);
-            locationTextView.setText(locationString+nowMac);
+            Log.d("main","nowmac"+nowMac);
                 Message message = new Message();
                 message.what = NOTIFACTION;
                 hander.sendMessage(message);
+
         }
+
+
     }
 
     @Override
@@ -322,9 +376,7 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         unregisterReceiver(locationReceiver);
     }
-    public void initButton(){
 
-    }
 
 
 }

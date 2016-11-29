@@ -4,20 +4,24 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/bt_homepage"
-            android:icon="@drawable/ic_menu_gallery"
+            android:icon="@drawable/index"
             android:title="首页" />
         <item
             android:id="@+id/bt_richeng"
-            android:icon="@drawable/ic_menu_slideshow"
+            android:icon="@drawable/ic_action_chat_light"
             android:title="所有日程" />
 
         <item
             android:id="@+id/bt_perference"
-            android:icon="@drawable/ic_menu_share"
-            android:title="个人设置" />
+            android:icon="@drawable/personinformation"
+            android:title="个人信息" />
+        <item
+            android:id="@+id/bt_config"
+            android:icon="@drawable/config"
+            android:title="偏好设置" />
         <item
             android:id="@+id/bt_weizhi"
-            android:icon="@drawable/ic_menu_camera"
+            android:icon="@drawable/location"
             android:title="位置信息"/>
     </group>
 

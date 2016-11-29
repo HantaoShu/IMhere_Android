@@ -16,16 +16,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="@dimen/nav_header_vertical_spacing"
-        android:text="用户名:"
+        android:id="@+id/left_bar_username"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-        android:id="@+id/left_bar_username"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="@dimen/nav_header_vertical_spacing"
-        android:text="附近的树莓派MAC地址:"
-        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-        android:id="@+id/left_bar_location"/>
+        />
 
 </LinearLayout>
