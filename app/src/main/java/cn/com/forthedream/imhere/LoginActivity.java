@@ -21,7 +21,18 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(LoginActivity.this,MainActivity.class);
-                intent.putExtra("username",username.getText());
+                intent.putExtra("name",""+username.getText());
+                startActivity(intent);
+                finish();
+            }
+        });
+        Button reg = (Button) findViewById(R.id.adduser);
+        reg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(LoginActivity.this,MainActivity.class);
+                intent.putExtra("name","zby");
+                intent.putExtra("caonima",true);
                 startActivity(intent);
                 finish();
             }

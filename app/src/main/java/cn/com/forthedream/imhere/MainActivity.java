@@ -3,13 +3,17 @@ package cn.com.forthedream.imhere;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -30,6 +34,9 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
+import android.webkit.DownloadListener;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.AdapterView;
@@ -56,7 +63,8 @@ import static java.lang.Math.pow;
 public class MainActivity extends AppCompatActivity {
     private View perference;
     private View main;
-
+    private ValueCallback<Uri[]> mUploadCallbackAboveL;
+    private Uri imageUri;
     private ListView listView;
     private TextView username;
     private IntentFilter locationIntentFilter;
@@ -72,9 +80,21 @@ public class MainActivity extends AppCompatActivity {
     private static String uuid="-";
     private static int txpower;
     private static double distence;
-    private static String name;
     private static Handler hander;
+    private String Name;
     private boolean hadNotification = false;
+    private static long beforeshuaxintime=0;
+    private static int maxdist = 10000;
+    private static final int REQUEST_GET_THE_THUMBNAIL = 4000;
+    private static final long ANIMATION_DURATION = 200;
+    public final static int FILECHOOSER_RESULTCODE_FOR_ANDROID_5 = 2;
+    private ValueCallback<Uri> mUploadMessage;
+    public ValueCallback<Uri[]> uploadMessage;
+    public static final int REQUEST_SELECT_FILE = 100;
+    private final static int FILECHOOSER_RESULTCODE = 2;
+    private  final static String IP="http://192.168.1.101:8082";
+    private static String name;
+    private static String UUID = "e20a39f4-73f5-4bc4-a12f-17d1ad07a961";
     NotificationManager manger;
     @SuppressLint("SetTextI18n")
     private void init(){
@@ -135,7 +155,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //Toast.makeText(MainActivity.this,"caonima",Toast.LENGTH_SHORT).show();
-                    webView.loadUrl("http://imhere.zhranklin.com/new_richeng");
+                webView.loadUrl("http://imhere.zhranklin.com/new_richeng");
+            }
+        });
+        items.get(1).view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                webView.loadUrl(IP+"/print");
+            }
+        });
+        items.get(0).view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                webView.loadUrl("http://imhere.zhranklin.com/new_url/"+Name+"/"+uuid);
             }
         });
         // Listen menu open and close events to animate the button content view
@@ -177,20 +209,24 @@ public class MainActivity extends AppCompatActivity {
                 if (id == R.id.bt_homepage) {
                     Log.d("weizhi","home");
                     // Handle the camera action
-                    webView.loadUrl("http://imhere.zhranklin.com/items/"+uuid+"/a");
+                    webView.loadUrl("http://imhere.zhranklin.com/items/"+uuid+"/"+Name);
                 }
                 else if (id == R.id.bt_richeng) {
-                    webView.loadUrl("http://imhere.zhranklin.com/richeng");
+                    webView.loadUrl("http://imhere.zhranklin.com/richeng/"+Name);
+                    // webView.loadUrl("http://192.168.4.117:8082/print");
                 }
                 else if (id == R.id.bt_config){
-                    webView.loadUrl("http://imhere.zhranklin.com/pref/a");
+                    webView.loadUrl("http://imhere.zhranklin.com/pref/"+Name);
                 }
                 else if (id== R.id.bt_perference) {
-                    webView.loadUrl("http://imhere.zhranklin.com/profile/sht");
+                    webView.loadUrl("http://imhere.zhranklin.com/profile/"+Name);
                 }
                 else if (id== R.id.bt_weizhi){
                     String url = "http://imhere.zhranklin.com/place_detail/-"+"/-"+"/-"+"/-"+"/-";
                     webView.loadUrl(url);
+                }
+                else if (id == R.id.bt_dayin){
+                    webView.loadUrl(IP+"/print/files");
                 }
 
                 DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -201,13 +237,45 @@ public class MainActivity extends AppCompatActivity {
         });
 
         webView = (WebView) findViewById(R.id.webview);
-        webView.loadUrl("http://imhere.zhranklin.com/items/a/b");
+        webView.loadUrl("http://imhere.zhranklin.com/items/"+uuid+"/"+Name);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.setWebViewClient(new WebViewClient() {
             public boolean shouldOverrideUrlLoading(WebView view, String url)
             {
                 view.loadUrl(url);
                 return true;
+            }
+        });
+        webView.setWebChromeClient(new WebChromeClient(){
+            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+            public boolean onShowFileChooser(WebView mWebView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams)
+            {
+                if (uploadMessage != null) {
+                    uploadMessage.onReceiveValue(null);
+                    uploadMessage = null;
+                }
+
+                uploadMessage = filePathCallback;
+
+                Intent intent = fileChooserParams.createIntent();
+                try
+                {
+                    startActivityForResult(intent, REQUEST_SELECT_FILE);
+                } catch (ActivityNotFoundException e)
+                {
+                    uploadMessage = null;
+                    Toast.makeText(getBaseContext(), "Cannot Open File Chooser", Toast.LENGTH_LONG).show();
+                    return false;
+                }
+                return true;
+            }
+        });
+        webView.setDownloadListener(new DownloadListener() {
+            @Override
+            public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
+                Uri uri = Uri.parse(url);
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                startActivity(intent);
             }
         });
         hander=new Handler() {
@@ -222,13 +290,15 @@ public class MainActivity extends AppCompatActivity {
                         Matcher m = r.matcher(webView.getUrl());
                         if(m.find()){
                             Log.d("main","caonimacaonima");
+
                             String url = "http://imhere.zhranklin.com/place_detail/"+uuid+"/"+name+"/"+ nowMac+"/"+txpower+"/"+String.format("%.2f",distence);
-                            webView.loadUrl(url);
+                            if(!url.equals(webView.getUrl()))
+                                webView.loadUrl(url);
                         }
                         r = Pattern.compile(".*?items.*");
                         m = r.matcher(webView.getUrl());
                         if(m.find()){
-                            String url = "http://imhere.zhranklin.com/items/"+uuid+"/a";
+                            String url = "http://imhere.zhranklin.com/items/"+uuid+"/"+Name;
                             webView.loadUrl(url);
                         }
                         if(!hadNotification) {
@@ -263,7 +333,7 @@ public class MainActivity extends AppCompatActivity {
                         r = Pattern.compile(".*?items.*");
                         m = r.matcher(webView.getUrl());
                         if(m.find()){
-                            String url = "http://imhere.zhranklin.com/items/-"+"/a";
+                            String url = "http://imhere.zhranklin.com/items/"+uuid+"/"+Name;
                             webView.loadUrl(url);
                         }
 
@@ -302,9 +372,40 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }).start();
-
+        Intent backintent = getIntent();
+        Name = backintent.getStringExtra("name");
+        Boolean f = backintent.getBooleanExtra("caonima",false);
+        if(f){
+            webView.loadUrl("http://imhere.zhranklin.com/register");
+        }
+        username.setText(usernameString+backintent.getStringExtra("name"));
     }
+    public void onActivityResult(int requestCode, int resultCode, Intent intent)
+    {
 
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+        {
+            if (requestCode == REQUEST_SELECT_FILE)
+            {
+                if (uploadMessage == null)
+                    return;
+                uploadMessage.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, intent));
+                uploadMessage = null;
+            }
+        }
+        else if (requestCode == FILECHOOSER_RESULTCODE)
+        {
+            if (null == mUploadMessage)
+                return;
+            // Use MainActivity.RESULT_OK if you're implementing WebView inside Fragment
+            // Use RESULT_OK only if you're implementing WebView inside an Activity
+            Uri result = intent == null || resultCode != MainActivity.RESULT_OK ? null : intent.getData();
+            mUploadMessage.onReceiveValue(result);
+            mUploadMessage = null;
+        }
+        else
+            Toast.makeText(getBaseContext(), "Failed to Upload Image", Toast.LENGTH_LONG).show();
+    }
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if ((keyCode == KeyEvent.KEYCODE_BACK) && webView.canGoBack()) {
             webView.goBack(); //goBack()表示返回WebView的上一页面

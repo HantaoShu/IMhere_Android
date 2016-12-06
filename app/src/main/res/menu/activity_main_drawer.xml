@@ -23,6 +23,10 @@
             android:id="@+id/bt_weizhi"
             android:icon="@drawable/location"
             android:title="位置信息"/>
+        <item
+            android:id="@+id/bt_dayin"
+            android:icon="@drawable/ic_menu_gallery"
+            android:title="远程打印"/>
     </group>
 
 
